@@ -38,6 +38,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class TagViewSet(mixins.ListModelMixin,
                  mixins.CreateModelMixin,
                  mixins.UpdateModelMixin,
+                 mixins.DestroyModelMixin,
                  viewsets.GenericViewSet):
     """Manage tags in the database"""
     authentication_classes = [TokenAuthentication]
