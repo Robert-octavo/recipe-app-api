@@ -44,7 +44,7 @@ def create_user(**params):
     return get_user_model().objects.create_user(**params)
 
 
-def create_tag(user, name='Main course'):
+def create_tag(user, name):
     """Create and return a tag"""
     return Tag.objects.create(user=user, name=name)
 
@@ -224,8 +224,8 @@ class PrivateRecipeApiTest(TestCase):
         res = self.client.post(RECIPES_URL, payload, format='json')
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        recipes = Recipe.objects.get(user=self.user)
-        self.assertEqual(recipes.tags.count(), 1)
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)
         recipe = recipes[0]
         self.assertEqual(recipe.tags.count(), 2)
         for tag in payload['tags']:
@@ -238,7 +238,7 @@ class PrivateRecipeApiTest(TestCase):
     def test_create_recipe_with_existing_tag(self):
         """Test creating a recipe with an existing tag"""
 
-        tag = create_tag(user=self.user, name='Vegan')
+        tag_vegan = create_tag(user=self.user, name='Vegan')
         payload = {
             'title': 'Avocado lime cheesecake',
             'tags': [{'name': 'Vegan'}, {'name': 'Dessert'}],
@@ -253,10 +253,10 @@ class PrivateRecipeApiTest(TestCase):
         self.assertEqual(recipes.count(), 1)
         recipe = recipes[0]
         self.assertEqual(recipe.tags.count(), 2)
-        self.assertIn(tag, recipe.tags.all())
+        self.assertIn(tag_vegan, recipe.tags.all())
         for tag in payload['tags']:
             exists = recipe.tags.filter(
-                name=tag.name,
+                name=tag['name'],
                 user=self.user,
             ).exists()
             self.assertTrue(exists)
