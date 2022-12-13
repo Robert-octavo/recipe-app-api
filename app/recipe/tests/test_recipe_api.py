@@ -356,3 +356,47 @@ class PrivateRecipeApiTest(TestCase):
                 user=self.user,
             ).exists()
             self.assertTrue(exists)
+
+    def test_create_ingredient_on_update(self):
+        """Test creating a new ingredient on update"""
+
+        recipe = create_recipe(user=self.user)
+        payload = {'ingredients': [{'name': 'Lime'}]}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        new_ingredient = Ingredient.objects.get(user=self.user, name='Lime')
+        self.assertIn(new_ingredient, recipe.ingredients.all())
+
+    def test_update_recipe_assign_ingredient(self):
+        """Test updating a recipe to assign an ingredient"""
+        ingredient_breakfast = Ingredient.objects.create(
+            user=self.user, name='pepper')
+        recipe = create_recipe(user=self.user)
+        recipe.ingredients.add(ingredient_breakfast)
+
+        ingredient_lunch = Ingredient.objects.create(
+            user=self.user, name='chili')
+        payload = {'ingredients': [{'name': 'chili'}]}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(ingredient_lunch, recipe.ingredients.all())
+        self.assertNotIn(ingredient_breakfast, recipe.ingredients.all())
+
+    def test_clear_recipe_ingredients(self):
+        """Test clearing ingredients from a recipe"""
+        ingredient_breakfast = Ingredient.objects.create(
+            user=self.user, name='pepper')
+        recipe = create_recipe(user=self.user)
+        recipe.ingredients.add(ingredient_breakfast)
+
+        payload = {'ingredients': []}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.ingredients.count(), 0)
+        # self.assertNotIn(ingredient_breakfast, recipe.ingredients.all())
